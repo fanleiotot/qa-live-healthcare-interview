@@ -1,11 +1,11 @@
-# Instructions for asdm-context-update action
+# Context Update Instruction
 
 ## Purpose
-This instruction guides the AI model to update existing context files when workspace changes occur.
+This instruction guides the AI model to update existing context for the current workspace when changes occur.
 
 ## Language Detection
 
-Before updating context files, you must detect and use the current environment's response language:
+Before updating any context files, you must detect and use the current environment's response language:
 
 1. **Detect Response Language**: Analyze the environment settings to determine the primary language:
    - Check system/user language settings or environment configuration
@@ -17,51 +17,98 @@ Before updating context files, you must detect and use the current environment's
    - Maintain language consistency across all updated context files
    - Follow the detected language's writing conventions and formatting
 
-**IMPORTANT**: The language detection is the FIRST step before any context updates. All output must consistently use the detected language throughout the entire process.
+3. **Supported Languages**:
+   - English (en)
+   - Chinese (zh)
+   - Other languages as needed based on environment detection
+
+**IMPORTANT**: The language detection is the FIRST step before any context update. All output must consistently use the detected language throughout the entire process.
+
+## When to Update Context
+Update context when:
+- New files or directories are added/removed
+- Technology stack changes (new frameworks, libraries, tools)
+- Data models are modified
+- API endpoints are added/changed/removed
+- Deployment configuration changes
+- Architecture evolves
+- Coding standards are updated
 
 ## Steps to Update Context
 
 ### 1. Check Existing Context
-First, check if `.asdm/contexts/` directory exists and contains context files. If not, follow the initial context generation process.
+Review existing context files in `.asdm/contexts/` directory to understand current state.
 
-### 2. Analyze Workspace Changes
-Identify what has changed in the workspace since the last context generation:
-- New files or directories added
-- Modified files
-- Deleted files or directories
-- Changes in technology stack
-- Updated dependencies
-- New API endpoints or changes
-- Database schema modifications
+### 2. Analyze Changes
+Analyze what has changed in the workspace since the last context generation:
+- Compare current workspace structure with documented structure
+- Identify new/modified files and directories
+- Detect changes in dependencies and configurations
+- Review updated code patterns and conventions
 
-### 3. Update Context Files
-Update the relevant context files based on the detected changes:
+### 2.5 Use Spec as Reference
+Use the specs from `spec/` directory as reference points when updating context:
+**Important**: Translate and adapt all spec content to the detected language, ensuring natural and accurate localization of all text, examples, and explanations.
+- Compare current workspace state with spec requirements
+- Customize spec content based on actual workspace analysis
+- Ensure updates align with spec standards while reflecting reality
 
-1. **Update index.md** - Always update the main index to reflect current workspace state
-2. **Update specific context files** based on the nature of changes:
-   - For structural changes: update `standard-project-structure.md`
-   - For code style changes: update `standard-coding-style.md`
-   - For data model changes: update `data-models.md`
-   - For deployment changes: update `deployment.md`
-   - For API changes: update `api.md`
-   - For architecture changes: update `architecture.md`
+### 3. Update Specific Context Files (On-Demand)
+Update context files one at a time based on user requests to ensure high-quality output:
+**Each file should be updated individually and must use the detected language:**
+
+- User specifies which context file needs updating
+- Update the requested file individually using the detected language
+- Maintain consistency with other context files
+- Wait for user review before proceeding to the next update
+
+Update only the context files that are affected by the changes:
+
+#### For structural changes:
+- Update `index.md` with new file tree and comments (use detected language)
+- Update `standard-project-structure.md` if project organization changed (use detected language)
+
+#### For technology changes:
+- Update `index.md` technology stack section (use detected language)
+- Update `standard-coding-style.md` if coding standards changed (use detected language)
+
+#### For data model changes:
+- Update `data-models.md` with new/modified models (use detected language)
+- Update diagrams and relationships
+
+#### For API changes:
+- Update `api.md` with new/modified endpoints (use detected language)
+- Update sample data and documentation (use detected language)
+
+#### For deployment changes:
+- Update `deployment.md` with new configuration (use detected language)
+- Update deployment diagrams
+
+#### For architecture changes:
+- Update `architecture.md` with new architectural decisions (use detected language)
+- Update architecture diagrams
 
 ### 4. Maintain Consistency
-Ensure all updates maintain consistency:
-- Use the same language as existing context files
-- Preserve existing structure and formatting
-- Update navigation links and cross-references
-- Maintain version tracking and change history
+Ensure all context files remain consistent with each other:
+- Cross-references between files should be accurate
+- Terminology should be consistent across all files (using detected language)
+- Diagrams should reflect current state
+- Language usage should remain uniform across all updated files
 
-### 5. Add Change Log
-Consider adding a change log or version history to track context updates over time.
-
-### 6. Validate Updates
-After updating, validate that:
-- All context files are current and accurate
-- Cross-references between files are correct
-- Diagrams and examples reflect current state
-- No broken links or outdated information
+### 5. Version Context
+Consider adding version information or change logs to context files to track updates. Use the detected language for all version information.
 
 ## Usage
-To use this instruction, simply follow the steps above. The AI model should analyze workspace changes and update context files accordingly.
+To use this instruction:
+1. First detect and apply the environment's response language
+2. Analyze what has changed in the workspace
+3. Update the requested context file individually on-demand
+4. Focus on incremental updates rather than regenerating everything from scratch
+5. Always use the detected language throughout the entire update process
+
+This phased approach ensures:
+- Efficient token usage
+- Higher quality output for each update
+- User control over the update sequence
+- Ability to adjust based on feedback
+- Consistent language usage across all context files
