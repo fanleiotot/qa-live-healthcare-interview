@@ -1,377 +1,397 @@
 # 标准项目结构文档
 
-## 📁 项目结构概览
+## 概述
 
-QA Live Healthcare 项目采用标准的 Vue 3 + TypeScript + Vite 项目结构，按照功能模块进行组织。项目遵循前端开发的最佳实践，将组件、数据、路由等代码进行清晰的分离。
+QA Live Healthcare 是一个基于 Vite + Vue 3 + TypeScript 脚手架模板生成的纯前端 SPA 项目。结构遵循 Vite 官方推荐的目录布局，按**功能类型**（views / components / data / store / router）组织代码。
 
 ```mermaid
 graph TD
-    A[qa-live-healthcare] --> B[src]
-    A --> C[public]
-    A --> D[配置文件]
-    B --> E[assets]
-    B --> F[components]
-    B --> G[data]
-    B --> H[router]
-    B --> I[store]
-    B --> J[views]
-    B --> K[核心文件]
+    ROOT[qa-live-healthcare/] --> SRC[src/]
+    ROOT --> PUBLIC[public/]
+    ROOT --> CFG[配置文件]
+    ROOT --> ASDM[.asdm/]
+    ROOT --> SVR[server/]
+
+    SRC --> VIEWS[views/ - 6 个页面]
+    SRC --> COMP[components/ - 3 个组件]
+    SRC --> DATA[data/ - 3 个 JSON]
+    SRC --> STORE[store/ - 状态管理]
+    SRC --> ROUTER[router/ - 路由配置]
+    SRC --> ASSETS[assets/ - 静态资源]
+    SRC --> CORE[App.vue + main.ts + style.css]
+
+    CFG --> PCFG[package.json]
+    CFG --> VCFG[vite.config.ts]
+    CFG --> TCFG[tsconfig*.json]
+    CFG --> HTML[index.html]
 ```
 
-## 🗂️ 完整目录结构
+---
+
+## 完整目录结构
 
 ```
 qa-live-healthcare/
 │
-├── src/                          # 源代码目录
-│   ├── assets/                   # 静态资源目录
-│   │   └── vue.svg               # Vue Logo
+├── src/                              # 源代码（TypeScript + Vue SFC）
+│   ├── views/                        # 页面视图组件（路由级）
+│   │   ├── Home.vue                  #   首页（统计卡片 + 开放诊室）
+│   │   ├── Consultation.vue          #   患者问诊（两阶段 UI，~480 行）
+│   │   ├── DoctorLogin.vue           #   医生登录
+│   │   ├── DoctorRoom.vue            #   医生工作台（回答问题）
+│   │   ├── Doctors.vue               #   医生列表
+│   │   └── About.vue                 #   关于平台
 │   │
-│   ├── components/               # 公共组件目录
-│   │   ├── AppHeader.vue         # 应用顶部导航栏
-│   │   ├── AppFooter.vue         # 应用底部
-│   │   └── HelloWorld.vue        # 示例组件（保留）
+│   ├── components/                   # 公共组件（跨页面复用）
+│   │   ├── AppHeader.vue             #   全局顶部导航栏（固定 64px）
+│   │   ├── AppFooter.vue             #   全局底部
+│   │   └── HelloWorld.vue            #   脚手架示例（未使用，可删除）
 │   │
-│   ├── data/                     # 静态数据目录
-│   │   ├── doctor-user-list.json # 医生用户数据
-│   │   ├── patient-user.json     # 患者用户数据
-│   │   └── question-list.json    # 咨询问题数据
+│   ├── data/                         # 静态 JSON 数据（应用初始数据源）
+│   │   ├── doctor-user-list.json     #   5 位医生数据
+│   │   ├── patient-user.json         #   5 位患者数据
+│   │   └── question-list.json        #   7 条问诊记录
 │   │
-│   ├── router/                   # 路由配置目录
-│   │   └── index.ts              # 路由定义和配置
+│   ├── store/
+│   │   └── index.ts                  # 响应式状态管理（接口定义 + 业务逻辑）
 │   │
-│   ├── store/                    # 状态管理目录
-│   │   └── index.ts              # 响应式状态管理
+│   ├── router/
+│   │   └── index.ts                  # 路由配置（7 条路由，静态导入）
 │   │
-│   ├── views/                    # 页面视图目录
-│   │   ├── Home.vue              # 首页
-│   │   ├── Consultation.vue      # 在线咨询页
-│   │   ├── DoctorLogin.vue        # 医生登录页
-│   │   ├── DoctorRoom.vue        # 医生诊室页
-│   │   ├── Doctors.vue           # 医生列表页
-│   │   └── About.vue              # 关于页面
+│   ├── assets/
+│   │   └── vue.svg                   # Vue Logo（未使用）
 │   │
-│   ├── App.vue                   # 根组件
-│   ├── main.ts                   # 应用入口文件
-│   ├── style.css                 # 全局样式
-│   └── vite-env.d.ts             # Vite 类型声明
+│   ├── App.vue                       # 根组件（Ant Design Layout 壳）
+│   ├── main.ts                       # 应用入口（注册 Antd + Router）
+│   ├── style.css                     # 全局样式重置
+│   └── vite-env.d.ts                 # Vite 类型声明（/// <reference>）
 │
-├── public/                       # 公共资源目录
-│   └── *.svg                     # 公共 SVG 文件
+├── public/                           # 静态资源（不经 Vite 处理，直接复制）
+│   └── vite.svg                      # Vite 图标
 │
-├── package.json                  # 项目依赖配置
-├── package-lock.json             # 依赖锁定文件
-├── vite.config.ts                # Vite 构建配置
-├── tsconfig.json                 # TypeScript 基础配置
-├── tsconfig.app.json             # TypeScript 应用配置
-├── tsconfig.node.json            # TypeScript Node 配置
-├── index.html                    # HTML 入口文件
-├── README.md                     # 项目说明文档
-└── .gitignore                    # Git 忽略配置
+├── server/                           # 后端服务（预留，当前为空）
+│   └── qa-service-user/              #   用户服务目录（空）
+│
+├── .asdm/                            # ASDM 配置与工具集
+│   ├── contexts/                     # Context Builder 上下文文件
+│   └── toolsets/                     # 已安装的工具集
+│
+├── .bolt/                            # Bolt 配置
+│   └── config.json                   #   模板标识: vite-vue-ts
+│
+├── .codebuddy/                       # CodeBuddy 配置
+│   └── commands/                     # 自定义命令
+│
+├── .env                              # 环境变量（空文件）
+├── .gitignore                        # Git 忽略规则
+├── index.html                        # HTML 入口（Vite 挂载点）
+├── package.json                      # 项目依赖与脚本
+├── package-lock.json                 # 依赖版本锁定
+├── vite.config.ts                    # Vite 构建配置
+├── tsconfig.json                     # TypeScript 基础配置
+├── tsconfig.app.json                 # TypeScript 应用配置（strict 模式）
+├── tsconfig.node.json                # TypeScript Node 配置
+└── README.md                         # 项目说明（脚手架默认内容）
 ```
 
-## 📂 核心目录详解
+---
 
-### 1. src/components - 公共组件
+## 核心目录详解
 
-**目录路径**: `src/components/`
+### src/views/ — 页面视图
 
-**说明**: 存放应用的公共组件，这些组件可在多个页面中复用。
+每个 `.vue` 文件对应一个路由页面，是应用的功能主体。
 
-**组件列表**:
+| 文件 | 路由 | 行数 | 职责 | 使用的主要 Ant Design 组件 |
+|------|------|------|------|--------------------------|
+| `Home.vue` | `/` | ~200 | 首页：Hero 区 + 统计卡片 + 开放诊室网格 | Card, Row, Col, Badge, Button, Tag |
+| `Consultation.vue` | `/consultation[/:doctorUsername]` | ~480 | 患者问诊：身份验证 → 问题列表 → 提交弹窗 | Form, Input, DatePicker, Select, Modal, Textarea, Card, Tag, Empty, Timeline |
+| `DoctorLogin.vue` | `/doctor/login` | ~80 | 医生登录表单 | Form, Input, Button, Alert |
+| `DoctorRoom.vue` | `/doctor/room/:username` | ~250 | 医生工作台：待回复列表 + 已解答折叠 | Card, Button, Textarea, Badge, Collapse, Tag, Empty, Alert, message |
+| `Doctors.vue` | `/doctors` | ~90 | 医生团队展示（含在线状态标识） | Card, Row, Col, Badge, Tag |
+| `About.vue` | `/about` | ~160 | 平台介绍（4 特色卡片 + 4 服务流程步骤） | Card, Row, Col, Steps |
 
-| 组件名称 | 文件名 | 功能描述 | 依赖关系 |
-|---------|--------|---------|---------|
-| 应用头部 | AppHeader.vue | 顶部导航栏，包含 Logo 和导航菜单 | Ant Design Vue |
-| 应用底部 | AppFooter.vue | 页面底部信息展示 | 无 |
-| 示例组件 | HelloWorld.vue | Vue 欢迎示例组件 | 无 |
+> `Consultation.vue` 是最大的组件（~480 行），同时承载了患者验证和问诊功能，未来可考虑拆分。
 
-**使用规范**:
-```typescript
-// 在其他组件中导入使用
-import AppHeader from '@/components/AppHeader.vue';
-import AppFooter from '@/components/AppFooter.vue';
-```
+### src/components/ — 公共组件
 
-### 2. src/views - 页面视图
+跨页面复用的 UI 组件。
 
-**目录路径**: `src/views/`
+| 文件 | 被引用位置 | 职责 |
+|------|-----------|------|
+| `AppHeader.vue` | `App.vue` | 全局顶部导航：Logo + 菜单项（首页/医生/关于）+ 登录状态检测 |
+| `AppFooter.vue` | `App.vue` | 全局底部：版权信息 |
+| `HelloWorld.vue` | **无** | Vite 脚手架默认示例，未被任何文件引用 |
 
-**说明**: 存放应用的主要页面组件，每个文件对应一个路由页面。
+### src/data/ — 静态数据
 
-**页面列表**:
+通过 TypeScript `import` 在 `store/index.ts` 中加载，Vite 打包时内联。
 
-| 页面名称 | 路由路径 | 组件名 | 功能描述 |
-|---------|---------|--------|---------|
-| 首页 | `/` | Home.vue | 展示平台介绍和在线医生 |
-| 咨询页 | `/consultation` | Consultation.vue | 患者咨询入口和我的问题 |
-| 医生列表 | `/doctors` | Doctors.vue | 展示所有医生信息 |
-| 关于页 | `/about` | About.vue | 平台介绍 |
-| 医生登录 | `/doctor/login` | DoctorLogin.vue | 医生身份验证 |
-| 医生诊室 | `/doctor/room/:username` | DoctorRoom.vue | 医生工作台 |
+| 文件 | 类型 | 记录数 | 关键字段 |
+|------|------|--------|----------|
+| `doctor-user-list.json` | `Doctor[]` | 5 | id, username, name, title, department, isActive |
+| `patient-user.json` | `Patient[]` | 5 | id, name, birthday, phone, gender |
+| `question-list.json` | `Question[]` | 7 | id, patientId, doctorId, question, status |
 
-**页面层级关系**:
-```mermaid
-graph LR
-    A[App.vue] --> B[RouterView]
-    B --> C[Home]
-    B --> D[Consultation]
-    B --> E[Doctors]
-    B --> F[About]
-    B --> G[DoctorLogin]
-    B --> H[DoctorRoom]
-```
+### src/store/ — 状态管理
 
-### 3. src/router - 路由配置
+单文件 `index.ts`，承担以下职责：
 
-**目录路径**: `src/router/`
-
-**核心文件**: `index.ts`
-
-**功能**: 集中管理应用的所有路由配置，使用 Vue Router 4。
-
-**路由定义示例**:
-```typescript
-const routes: RouteRecordRaw[] = [
-  {
-    path: '/',
-    name: 'Home',
-    component: Home,
-  },
-  {
-    path: '/consultation/:doctorUsername',
-    name: 'ConsultationRoom',
-    component: Consultation,
-  },
-];
-```
-
-### 4. src/store - 状态管理
-
-**目录路径**: `src/store/`
-
-**核心文件**: `index.ts`
-
-**功能**: 使用 Vue 3 的响应式系统实现轻量级状态管理。
-
-**状态结构**:
-```typescript
-interface State {
-  doctors: Doctor[];           // 医生数据
-  patients: Patient[];         // 患者数据
-  questions: Question[];       // 咨询问题
-  currentDoctor: Doctor | null; // 当前医生
-  currentPatient: Patient | null; // 当前患者
-}
-```
+| 职责 | 内容 |
+|------|------|
+| **接口定义** | `Doctor`, `Patient`, `Question`, `State` |
+| **状态初始化** | `reactive<State>({...})`，从 JSON 文件加载数据 |
+| **业务方法** | `loginDoctor`, `verifyPatient`, `addQuestion`, `answerQuestion` 等 11 个方法 |
+| **导出** | `export const store` 供组件直接调用 |
 
 **使用方式**:
 ```typescript
-import { store } from '@/store';
+import { store } from '../store';
 
 // 读取状态
 const doctors = store.state.doctors;
 
-// 调用方法
-store.loginDoctor(username, password);
+// 调用方法（同步，无 async）
+const doctor = store.loginDoctor('dr-zhang-wei', '123456');
 ```
 
-### 5. src/data - 静态数据
+### src/router/ — 路由配置
 
-**目录路径**: `src/data/`
+单文件 `index.ts`，7 条路由定义。
 
-**说明**: 存放应用的静态 JSON 数据文件。
+```mermaid
+graph LR
+    subgraph 公开页面
+        A[/ → Home]
+        B[/doctors → Doctors]
+        C[/about → About]
+        D[/consultation → Consultation]
+        E[/consultation/:doctorUsername → Consultation]
+    end
 
-**数据文件列表**:
-
-| 文件名 | 内容 | 用途 |
-|-------|------|------|
-| doctor-user-list.json | 医生用户列表 | 医生数据源 |
-| patient-user.json | 患者用户列表 | 患者数据源 |
-| question-list.json | 咨询问题列表 | 问题数据源 |
-
-**数据加载方式**:
-```typescript
-import doctorData from '../data/doctor-user-list.json';
-import patientData from '../data/patient-user.json';
-import questionData from '../data/question-list.json';
+    subgraph 医生页面
+        F[/doctor/login → DoctorLogin]
+        G[/doctor/room/:username → DoctorRoom]
+    end
 ```
 
-### 6. src/assets - 静态资源
-
-**目录路径**: `src/assets/`
-
-**说明**: 存放需要经过 Webpack/Vite 处理静态资源，如图片、字体等。
-
-**当前内容**:
-- `vue.svg` - Vue 官方 Logo
-
-## ⚙️ 配置文件说明
-
-### package.json - 项目配置
-
-**位置**: 项目根目录
-
-**主要配置**:
-```json
-{
-  "name": "vite-vue-typescript-starter",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",           // 开发服务器
-    "build": "vue-tsc -b && vite build",  // 生产构建
-    "preview": "vite preview" // 预览构建结果
-  },
-  "dependencies": {
-    "vue": "^3.5.10",        // Vue 核心
-    "vue-router": "^4.6.3",  // 路由管理
-    "ant-design-vue": "^4.2.6", // UI 组件库
-    "dayjs": "^1.11.19"      // 日期处理
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^5.1.4",  // Vue 插件
-    "typescript": "^5.5.3",           // TypeScript
-    "vite": "^5.4.8",                // 构建工具
-    "vue-tsc": "^2.1.6"              // TS 类型检查
-  }
-}
-```
-
-### vite.config.ts - Vite 配置
-
-**位置**: 项目根目录
-
-**当前配置**:
-```typescript
-import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
-
-export default defineConfig({
-  plugins: [vue()],
-});
-```
-
-### TypeScript 配置文件
-
-| 文件 | 用途 |
-|------|------|
-| tsconfig.json | 基础配置，继承默认配置 |
-| tsconfig.app.json | 应用特定配置 |
-| tsconfig.node.json | Node 环境配置 |
-
-## 📐 组件开发规范
-
-### Vue 组件结构
-
-项目使用 Vue 3 的 `<script setup>` 语法，组件文件应遵循以下结构：
-
-```vue
-<script setup lang="ts">
-// 1. 导入
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { store } from '@/store';
-
-// 2. 类型定义（如果需要）
-interface Props {
-  title: string;
-}
-
-// 3. Props 和 Emit
-const props = defineProps<Props>();
-const emit = defineEmits<{
-  (e: 'update', value: string): void;
-}>();
-
-// 4. 响应式数据
-const count = ref(0);
-
-// 5. 计算属性
-const doubled = computed(() => count.value * 2);
-
-// 6. 方法
-const increment = () => {
-  count.value++;
-  emit('update', String(count.value));
-};
-
-// 7. 生命周期钩子（如需要）
-import { onMounted } from 'vue';
-onMounted(() => {
-  console.log('Component mounted');
-});
-</script>
-
-<template>
-  <!-- 模板内容 -->
-</template>
-
-<style scoped>
-/* 样式内容 */
-</style>
-```
-
-### 文件命名规范
-
-| 类型 | 规范 | 示例 |
-|------|------|------|
-| 组件 | PascalCase | AppHeader.vue |
-| 视图 | PascalCase | Home.vue |
-| 工具函数 | camelCase | utils.ts |
-| 类型定义 | camelCase | types.ts |
-| 样式文件 | kebab-case | style.css |
-
-### 目录组织原则
-
-1. **单一职责**: 每个文件只负责一个功能
-2. **就近原则**: 相关代码应放在一起
-3. **公共提取**: 多次使用的代码应提取为公共组件
-4. **清晰命名**: 文件和目录命名应清晰表达用途
-
-## 🔧 开发工作流
-
-### 新增页面流程
-
-1. 在 `src/views/` 创建页面组件
-2. 在 `src/router/index.ts` 添加路由配置
-3. 如需状态管理，在 `src/store/index.ts` 添加相关方法
-4. 如需组件，在 `src/components/` 创建
-
-### 新增组件流程
-
-1. 在 `src/components/` 创建组件文件
-2. 遵循组件结构规范编写代码
-3. 在需要的地方导入使用
-
-### 数据管理流程
-
-1. 静态数据存放在 `src/data/` 目录
-2. 通过 `src/store/index.ts` 统一管理
-3. 使用 TypeScript 接口定义数据类型
-
-## 📊 目录规模统计
-
-| 目录 | 文件数 | 主要用途 |
-|------|--------|---------|
-| src/components | 3 | 公共组件 |
-| src/views | 6 | 页面视图 |
-| src/data | 3 | 静态数据 |
-| src | 6 | 核心文件 |
-
-## 🚀 扩展建议
-
-### 未来可扩展的目录
-
-| 目录 | 用途 | 建议时机 |
-|------|------|---------|
-| src/api | API 接口封装 | 对接后端时 |
-| src/utils | 工具函数 | 代码复用增多时 |
-| src/types | 类型定义 | 类型较多时 |
-| src/hooks | 组合式函数 | 逻辑复用增多时 |
-| src/composables | 组合式 API | 复杂逻辑封装时 |
-| src/constants | 常量定义 | 常量增多时 |
+**特点**:
+- 所有组件为**静态 `import`**，未使用路由懒加载
+- **无路由守卫**（无 `beforeEach` 等），权限检查在组件 `onMounted` 中完成
+- **无路由 meta 信息**（无 title、权限标记等）
 
 ---
 
-*最后更新: 2026年4月21日*
-*本文档由 Context Builder 工具集自动生成*
+## 配置文件说明
+
+### package.json
+
+| 字段 | 值 | 说明 |
+|------|-----|------|
+| `name` | `vite-vue-typescript-starter` | 脚手架默认名称 |
+| `type` | `module` | ES Modules 模式 |
+| `private` | `true` | 不发布到 npm |
+
+**脚本**:
+
+| 命令 | 实现 | 说明 |
+|------|------|------|
+| `npm run dev` | `vite` | 启动开发服务器（默认端口 5173，支持 HMR） |
+| `npm run build` | `vue-tsc -b && vite build` | 先类型检查再构建（输出到 `dist/`） |
+| `npm run preview` | `vite preview` | 本地预览生产构建结果 |
+
+**依赖**:
+
+| 包 | 版本 | 类型 | 说明 |
+|----|------|------|------|
+| `vue` | ^3.5.10 | runtime | Vue 3 核心 |
+| `vue-router` | ^4.6.3 | runtime | 路由管理 |
+| `ant-design-vue` | ^4.2.6 | runtime | UI 组件库（全量引入） |
+| `dayjs` | ^1.11.19 | runtime | 日期格式化 |
+| `@vitejs/plugin-vue` | ^5.1.4 | dev | Vite 的 Vue SFC 编译插件 |
+| `typescript` | ^5.5.3 | dev | TypeScript 编译器 |
+| `vite` | ^5.4.8 | dev | 构建工具 |
+| `vue-tsc` | ^2.1.6 | dev | Vue 文件的 TypeScript 类型检查 |
+
+> **注意**: `@ant-design/icons-vue` 未在 `package.json` 中显式声明，它是 `ant-design-vue` 的传递依赖，但被多个组件直接 import。
+
+### vite.config.ts
+
+最小化配置，仅注册 Vue 插件：
+
+```typescript
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+})
+```
+
+**未配置项**（可按需添加）:
+- 路径别名（如 `@/` → `src/`）
+- 开发代理（API 请求转发）
+- 构建优化（分包、chunk 拆分）
+- CSS 预处理器（Sass/Less）
+- 环境变量前缀
+
+### TypeScript 配置
+
+| 文件 | 用途 |
+|------|------|
+| `tsconfig.json` | 入口配置，引用 `tsconfig.app.json` 和 `tsconfig.node.json` |
+| `tsconfig.app.json` | 应用代码配置：`strict: true`，目标 `ES2020`，模块 `ESNext`，`noUnusedLocals/Parameters` |
+| `tsconfig.node.json` | Vite 配置文件（`vite.config.ts`）的 TypeScript 配置 |
+
+**关键编译选项** (`tsconfig.app.json`):
+
+| 选项 | 值 | 影响 |
+|------|-----|------|
+| `strict` | `true` | 启用所有严格类型检查 |
+| `noUnusedLocals` | `true` | 禁止未使用的局部变量 |
+| `noUnusedParameters` | `true` | 禁止未使用的函数参数 |
+| `noFallthroughCasesInSwitch` | `true` | switch 语句必须有 break |
+| `moduleResolution` | `bundler` | 匹配 Vite 的模块解析策略 |
+| `noEmit` | `true` | 仅做类型检查，不输出文件（由 Vite 负责） |
+
+### index.html
+
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QA Live Healthcare</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+```
+
+---
+
+## 组件开发规范
+
+### Vue SFC 结构顺序
+
+项目统一使用 `<script setup lang="ts">`，组件结构固定为：
+
+```
+1. <script setup lang="ts">   — 逻辑层
+2. <template>                  — 模板层
+3. <style scoped>              — 样式层
+```
+
+### 组件内部代码组织
+
+```typescript
+<script setup lang="ts">
+// 1. Vue 核心
+import { ref, reactive, computed, watch, onMounted } from 'vue';
+
+// 2. Vue Router
+import { useRouter, useRoute } from 'vue-router';
+
+// 3. UI 库
+import { message } from 'ant-design-vue';
+
+// 4. 第三方库
+import dayjs from 'dayjs';
+
+// 5. 图标
+import { CheckCircleOutlined } from '@ant-design/icons-vue';
+
+// 6. 项目内部
+import { store } from '../store';
+
+// 7. 响应式数据
+const loading = ref(false);
+
+// 8. 计算属性
+const filteredList = computed(() => ...);
+
+// 9. 方法
+const handleSubmit = () => { ... };
+
+// 10. 生命周期
+onMounted(() => { ... });
+</script>
+```
+
+### 文件命名约定
+
+| 类型 | 命名风格 | 示例 |
+|------|----------|------|
+| Vue 组件/页面 | PascalCase | `AppHeader.vue`, `DoctorRoom.vue` |
+| TypeScript 文件 | camelCase | `main.ts`, `index.ts` |
+| CSS 类名 | kebab-case | `app-header`, `doctor-room` |
+| JSON 数据文件 | kebab-case | `doctor-user-list.json` |
+| 路由路径 | kebab-case | `/doctor/login`, `/doctor/room/:username` |
+| 响应式变量 | camelCase | `currentPatient`, `submitModalVisible` |
+| 事件处理函数 | handle / 动词开头 | `handleSubmit`, `verifyPatient` |
+| TypeScript 接口 | PascalCase（无 I 前缀） | `Doctor`, `Patient`, `Question` |
+
+---
+
+## 开发工作流
+
+### 新增页面
+
+1. 在 `src/views/` 创建 `XxxPage.vue`（使用 `<script setup lang="ts">`）
+2. 在 `src/router/index.ts` 添加路由配置并**静态 import**
+3. 在 `src/components/AppHeader.vue` 的菜单中添加导航项（如需要）
+4. 如需新数据模型，在 `src/store/index.ts` 定义接口
+5. 如需初始数据，在 `src/data/` 创建对应 JSON 文件
+
+### 新增公共组件
+
+1. 在 `src/components/` 创建 `XxxComponent.vue`
+2. 遵循 SFC 三段式结构 + 代码组织顺序
+3. 在使用方 `import XxxComponent from '../components/XxxComponent.vue'`
+
+### 新增数据操作
+
+1. 在 `src/store/index.ts` 的 `State` 接口中添加字段
+2. 在 `state` 初始化中赋初值
+3. 在 `store` 对象中添加业务方法
+4. 在组件中通过 `store.xxx()` 调用
+
+---
+
+## 目录规模统计
+
+| 目录 | 文件数 | 说明 |
+|------|--------|------|
+| `src/views/` | 6 | 页面视图 |
+| `src/components/` | 3 | 公共组件（1 个未使用） |
+| `src/data/` | 3 | JSON 数据 |
+| `src/store/` | 1 | 状态管理 |
+| `src/router/` | 1 | 路由配置 |
+| `src/` (根级) | 4 | App.vue, main.ts, style.css, vite-env.d.ts |
+| `src/assets/` | 1 | 静态资源（未使用） |
+| **src/ 合计** | **19** | — |
+
+---
+
+## 扩展建议
+
+当项目规模增长时，建议新增以下目录：
+
+| 目录 | 用途 | 触发时机 |
+|------|------|----------|
+| `src/api/` | HTTP 请求封装（axios 实例、拦截器） | 对接后端 API 时 |
+| `src/utils/` | 工具函数（如提取重复的 `formatTime`） | 重复代码出现时 |
+| `src/types/` | 独立类型定义文件 | 接口数量增多时 |
+| `src/hooks/` | 组合式函数（Composables） | 逻辑复用需求增多时 |
+| `src/constants/` | 常量定义（路由名、状态枚举等） | 硬编码字符串增多时 |
+| `src/styles/` | 全局样式变量和 mixins | 样式复杂度增加时 |
+| `tests/` | 单元测试 / E2E 测试 | 需要质量保障时 |
+
+---
+
+*最后更新: 2026-04-22*
+*由 Context Builder 工具集生成*
