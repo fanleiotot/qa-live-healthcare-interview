@@ -1,41 +1,125 @@
 # API 接口文档
 
-## 📋 文档概述
+## 概述
 
-本文档定义了 QA Live Healthcare 在线医疗问诊平台的 API 接口规范。当前项目为纯前端应用，采用客户端状态管理。随着业务发展，可按本规范设计与后端服务对接的 API 接口。
+**当前状态**: QA Live Healthcare 是纯前端 SPA，**无后端 API 调用**。所有数据操作通过 `src/store/index.ts` 的内存方法完成。
+
+**本文档定位**: 作为未来后端对接的 API 设计规范。每个 API 端点均标注了对应的现有 store 方法，便于前端迁移时逐个替换。
 
 ---
 
-## 🏗️ API 设计原则
+## API 设计规范
 
-### 基础规范
+### 通用约定
 
-| 规范项 | 说明 |
-|--------|------|
-| **协议** | HTTPS |
-| **数据格式** | JSON |
-| **字符编码** | UTF-8 |
-| **认证方式** | JWT Token |
-| **版本控制** | URL 路径版本号 |
+| 规范项 | 值 |
+|--------|-----|
+| 协议 | HTTPS |
+| 数据格式 | JSON |
+| 字符编码 | UTF-8 |
+| 认证方式 | JWT Token（Bearer） |
+| 版本控制 | URL 路径前缀 `/v1` |
+| 响应格式 | `{ code, message, data }` |
+
+### 统一响应格式
+
+```typescript
+// 成功响应
+interface ApiResponse<T> {
+  code: number;       // 业务状态码，200 表示成功
+  message: string;    // 状态描述
+  data: T;            // 业务数据
+}
+
+// 错误响应
+interface ApiErrorResponse {
+  code: number;       // 错误码（400/401/403/404/500）
+  message: string;    // 错误描述
+  data: null;
+  errors?: {          // 可选，参数校验错误详情
+    field: string;
+    message: string;
+  }[];
+}
+```
+
+### HTTP 状态码
+
+| 状态码 | 含义 | 使用场景 |
+|--------|------|----------|
+| 200 | 成功 | 查询、更新、删除 |
+| 201 | 创建成功 | 新增资源 |
+| 400 | 参数错误 | 请求体校验失败 |
+| 401 | 未认证 | Token 缺失或过期 |
+| 403 | 无权限 | 角色不匹配 |
+| 404 | 不存在 | 资源未找到 |
+| 500 | 服务器错误 | 未预期异常 |
 
 ### 基础 URL
 
 ```
 生产环境: https://api.qalive.com/v1
-开发环境: https://api-dev.qalive.com/v1
-本地开发: http://localhost:3000/v1
+开发环境: http://localhost:3000/v1
 ```
 
 ---
 
-## 🔐 认证接口
+## 接口清单与 Store 映射
 
-### 1. 医生登录
+```mermaid
+graph LR
+    subgraph 前端 Store 方法（当前）
+        S1[store.loginDoctor]
+        S2[store.verifyPatient]
+        S3[store.logoutDoctor / logoutPatient]
+        S4[store.getActiveDoctors]
+        S5[store.getDoctorByUsername]
+        S6[store.getQuestionsByDoctor]
+        S7[store.getQuestionsByPatient]
+        S8[store.addQuestion]
+        S9[store.answerQuestion]
+        S10[store.markQuestionAsAnswered]
+        S11[store.getStatistics]
+    end
 
-**接口地址**: `POST /auth/doctor/login`
+    subgraph 未来 API 端点
+        A1[POST /auth/doctor/login]
+        A2[POST /auth/patient/verify]
+        A3[POST /auth/logout]
+        A4[GET /doctors?isActive=true]
+        A5[GET /doctors/:username]
+        A6[GET /doctors/:doctorId/questions]
+        A7[GET /patients/:patientId/questions]
+        A8[POST /questions]
+        A9[POST /questions/:id/answer]
+        A10[PUT /questions/:id/mark-answered]
+        A11[GET /statistics]
+    end
 
-**请求参数**:
+    S1 -.->|替换| A1
+    S2 -.->|替换| A2
+    S3 -.->|替换| A3
+    S4 -.->|替换| A4
+    S5 -.->|替换| A5
+    S6 -.->|替换| A6
+    S7 -.->|替换| A7
+    S8 -.->|替换| A8
+    S9 -.->|替换| A9
+    S10 -.->|替换| A10
+    S11 -.->|替换| A11
+```
 
+---
+
+## 认证接口
+
+### POST /auth/doctor/login
+
+> **替换**: `store.loginDoctor(username, password)` (`src/store/index.ts:59`)
+
+医生登录，返回 JWT Token。
+
+**请求**:
 ```json
 {
   "username": "dr-zhang-wei",
@@ -43,13 +127,12 @@
 }
 ```
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| username | string | 是 | 医生用户名 |
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| username | string | 是 | 登录用户名 |
 | password | string | 是 | 登录密码 |
 
-**成功响应**:
-
+**成功响应** `200`:
 ```json
 {
   "code": 200,
@@ -63,14 +146,16 @@
       "name": "张伟医生",
       "title": "主任医师",
       "department": "心内科",
-      "avatar": "https://images.example.com/doctor.jpg"
+      "avatar": "https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=400",
+      "experience": "15年临床经验",
+      "specialties": ["高血压", "冠心病", "心律失常"],
+      "isActive": true
     }
   }
 }
 ```
 
-**错误响应**:
-
+**错误响应** `401`:
 ```json
 {
   "code": 401,
@@ -79,58 +164,66 @@
 }
 ```
 
-### 2. 患者身份验证
+---
 
-**接口地址**: `POST /auth/patient/verify`
+### POST /auth/patient/verify
 
-**请求参数**:
+> **替换**: `store.verifyPatient(name, birthday)` (`src/store/index.ts:74`)
 
+患者身份验证。同名同生日视为同一患者，不存在则自动创建。
+
+**请求**:
 ```json
 {
-  "name": "张三",
-  "birthday": "1990-05-15"
+  "name": "赵明",
+  "birthday": "1985-03-15"
 }
 ```
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
 | name | string | 是 | 患者姓名 |
-| birthday | string | 是 | 生日 (YYYY-MM-DD) |
+| birthday | string | 是 | 生日，格式 YYYY-MM-DD |
 
-**成功响应**:
-
+**成功响应** `200`:
 ```json
 {
   "code": 200,
   "message": "验证成功",
   "data": {
-    "patientId": "patient001",
-    "name": "张三",
-    "birthday": "1990-05-15",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "id": "patient001",
+    "name": "赵明",
+    "birthday": "1985-03-15",
+    "phone": "138****1234",
+    "gender": "男",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "isNewUser": false
   }
 }
 ```
 
+> `isNewUser` 字段用于前端区分"欢迎回来"和"首次创建账户"提示。
+
 ---
 
-## 👨‍⚕️ 医生接口
+## 医生接口
 
-### 1. 获取医生列表
+### GET /doctors
 
-**接口地址**: `GET /doctors`
+> **替换**: `store.state.doctors`（全量访问）
+
+获取医生列表，支持筛选和分页。
 
 **查询参数**:
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| department | string | 否 | 科室筛选 |
-| isActive | boolean | 否 | 在线状态筛选 |
-| page | number | 否 | 页码 (默认1) |
-| pageSize | number | 否 | 每页数量 (默认10) |
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| department | string | 否 | — | 按科室筛选 |
+| isActive | boolean | 否 | — | 按在线状态筛选 |
+| page | number | 否 | 1 | 页码 |
+| pageSize | number | 否 | 10 | 每页数量 |
 
-**成功响应**:
-
+**成功响应** `200`:
 ```json
 {
   "code": 200,
@@ -143,7 +236,7 @@
         "name": "张伟医生",
         "title": "主任医师",
         "department": "心内科",
-        "avatar": "https://images.example.com/doctor1.jpg",
+        "avatar": "https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=400",
         "experience": "15年临床经验",
         "specialties": ["高血压", "冠心病", "心律失常"],
         "isActive": true
@@ -159,18 +252,57 @@
 }
 ```
 
-### 2. 获取医生详情
+---
 
-**接口地址**: `GET /doctors/{doctorId}`
+### GET /doctors/online
+
+> **替换**: `store.getActiveDoctors()` (`src/store/index.ts:141`)
+
+获取当前在线的医生列表（`isActive === true`）。
+
+**成功响应** `200`:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "id": "doc001",
+      "username": "dr-zhang-wei",
+      "name": "张伟医生",
+      "title": "主任医师",
+      "department": "心内科",
+      "avatar": "https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=400",
+      "specialties": ["高血压", "冠心病", "心律失常"]
+    },
+    {
+      "id": "doc002",
+      "username": "dr-li-na",
+      "name": "李娜医生",
+      "title": "副主任医师",
+      "department": "儿科",
+      "avatar": "https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=400",
+      "specialties": ["儿童感冒", "儿童发育", "疫苗接种"]
+    }
+  ]
+}
+```
+
+---
+
+### GET /doctors/:username
+
+> **替换**: `store.getDoctorByUsername(username)` (`src/store/index.ts:137`)
+
+按用户名获取医生信息（用于诊室页面）。
 
 **路径参数**:
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| doctorId | string | 是 | 医生ID |
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| username | string | 医生用户名，如 `dr-zhang-wei` |
 
-**成功响应**:
-
+**成功响应** `200`:
 ```json
 {
   "code": 200,
@@ -181,171 +313,36 @@
     "name": "张伟医生",
     "title": "主任医师",
     "department": "心内科",
-    "avatar": "https://images.example.com/doctor1.jpg",
+    "avatar": "https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=400",
     "experience": "15年临床经验",
     "specialties": ["高血压", "冠心病", "心律失常"],
-    "isActive": true,
-    "introduction": "擅长心血管疾病的诊断与治疗...",
-    "workingHours": "周一至周五 9:00-18:00"
-  }
-}
-```
-
-### 3. 获取在线医生
-
-**接口地址**: `GET /doctors/online`
-
-**成功响应**:
-
-```json
-{
-  "code": 200,
-  "message": "success",
-  "data": [
-    {
-      "id": "doc001",
-      "name": "张伟医生",
-      "title": "主任医师",
-      "department": "心内科",
-      "avatar": "https://images.example.com/doctor1.jpg",
-      "specialties": ["高血压", "冠心病"]
-    }
-  ]
-}
-```
-
-### 4. 更新医生在线状态
-
-**接口地址**: `PUT /doctors/{doctorId}/status`
-
-**请求头**: `Authorization: Bearer {token}`
-
-**请求参数**:
-
-```json
-{
-  "isActive": true
-}
-```
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| isActive | boolean | 是 | 是否在线 |
-
-**成功响应**:
-
-```json
-{
-  "code": 200,
-  "message": "状态更新成功",
-  "data": {
     "isActive": true
   }
 }
 ```
 
----
-
-## 👤 患者接口
-
-### 1. 患者注册
-
-**接口地址**: `POST /patients/register`
-
-**请求参数**:
-
+**错误响应** `404`:
 ```json
 {
-  "name": "张三",
-  "birthday": "1990-05-15",
-  "phone": "138****1234",
-  "gender": "男",
-  "password": "******"
-}
-```
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| name | string | 是 | 患者姓名 |
-| birthday | string | 是 | 生日 |
-| phone | string | 否 | 手机号 |
-| gender | string | 否 | 性别 |
-| password | string | 否 | 设置密码(可选) |
-
-**成功响应**:
-
-```json
-{
-  "code": 200,
-  "message": "注册成功",
-  "data": {
-    "patientId": "patient_new_001",
-    "name": "张三",
-    "birthday": "1990-05-15"
-  }
-}
-```
-
-### 2. 获取患者信息
-
-**接口地址**: `GET /patients/{patientId}`
-
-**请求头**: `Authorization: Bearer {token}`
-
-**成功响应**:
-
-```json
-{
-  "code": 200,
-  "message": "success",
-  "data": {
-    "id": "patient001",
-    "name": "赵明",
-    "birthday": "1985-03-15",
-    "phone": "138****1234",
-    "gender": "男",
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
-### 3. 更新患者信息
-
-**接口地址**: `PUT /patients/{patientId}`
-
-**请求头**: `Authorization: Bearer {token}`
-
-**请求参数**:
-
-```json
-{
-  "phone": "139****5678",
-  "gender": "女"
-}
-```
-
-**成功响应**:
-
-```json
-{
-  "code": 200,
-  "message": "更新成功",
+  "code": 404,
+  "message": "医生不存在",
   "data": null
 }
 ```
 
 ---
 
-## 💬 咨询问题接口
+## 问诊问题接口
 
-### 1. 提交问题
+### POST /questions
 
-**接口地址**: `POST /questions`
+> **替换**: `store.addQuestion(data)` (`src/store/index.ts:106`)
+
+患者提交问诊问题。需要患者 Token。
 
 **请求头**: `Authorization: Bearer {token}`
 
-**请求参数**:
-
+**请求**:
 ```json
 {
   "doctorId": "doc001",
@@ -353,25 +350,24 @@
 }
 ```
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| doctorId | string | 是 | 医生ID |
-| question | string | 是 | 问题内容 |
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| doctorId | string | 是 | 目标医生 ID |
+| question | string | 是 | 问题内容（非空） |
 
-**成功响应**:
-
+**成功响应** `201`:
 ```json
 {
   "code": 200,
   "message": "问题提交成功",
   "data": {
-    "id": "q_new_001",
+    "id": "q1748234567890",
     "patientId": "patient001",
     "patientName": "赵明",
     "doctorId": "doc001",
     "doctorName": "张伟医生",
-    "question": "最近总是感觉胸闷气短...",
-    "submitTime": "2025-11-03T09:30:00Z",
+    "question": "最近总是感觉胸闷气短,特别是爬楼梯的时候,这是什么原因?",
+    "submitTime": "2026-04-22T14:30:00.000Z",
     "status": "pending",
     "answer": null,
     "answerTime": null
@@ -379,22 +375,73 @@
 }
 ```
 
-### 2. 获取患者的问题列表
+> **前端迁移注意**: 当前 `addQuestion` 接收 `Omit<Question, 'id'|'submitTime'|'status'|'answer'|'answerTime'>`，后端接口应自动填充 `id`、`submitTime`、`status`、`patientId`、`patientName`、`doctorName`（从 Token 和 doctorId 推导）。
 
-**接口地址**: `GET /patients/{patientId}/questions`
+---
+
+### GET /doctors/:doctorId/questions
+
+> **替换**: `store.getQuestionsByDoctor(doctorId)` (`src/store/index.ts:98`)
+
+获取指定医生收到的所有问题。需要医生 Token。
 
 **请求头**: `Authorization: Bearer {token}`
 
+**路径参数**:
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| doctorId | string | 医生 ID |
+
 **查询参数**:
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| status | string | 否 | 状态筛选 (pending/answered) |
-| page | number | 否 | 页码 |
-| pageSize | number | 否 | 每页数量 |
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| status | string | 否 | 筛选：`pending` / `answered` |
 
-**成功响应**:
+**成功响应** `200`:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "pending": [
+      {
+        "id": "q004",
+        "patientId": "patient001",
+        "patientName": "赵明",
+        "question": "血压最近有点高,早上测量是145/95,需要吃降压药吗?",
+        "submitTime": "2025-11-02T14:20:00",
+        "status": "pending"
+      }
+    ],
+    "answered": [
+      {
+        "id": "q001",
+        "patientId": "patient001",
+        "patientName": "赵明",
+        "question": "最近总是感觉胸闷气短,特别是爬楼梯的时候,这是什么原因?",
+        "submitTime": "2025-11-02T09:30:00",
+        "status": "answered",
+        "answer": "根据您的描述,可能是心脏功能问题。建议您做个心电图和心脏彩超检查,同时注意休息,避免剧烈运动。",
+        "answerTime": "2025-11-02T09:45:00"
+      }
+    ]
+  }
+}
+```
 
+---
+
+### GET /patients/:patientId/questions
+
+> **替换**: `store.getQuestionsByPatient(patientId)` (`src/store/index.ts:102`)
+
+获取指定患者提交的所有问题。需要患者 Token。
+
+**请求头**: `Authorization: Bearer {token}`
+
+**成功响应** `200`:
 ```json
 {
   "code": 200,
@@ -405,11 +452,21 @@
         "id": "q001",
         "doctorId": "doc001",
         "doctorName": "张伟医生",
-        "question": "最近总是感觉胸闷气短...",
-        "submitTime": "2025-11-02T09:30:00Z",
+        "question": "最近总是感觉胸闷气短,特别是爬楼梯的时候,这是什么原因?",
+        "submitTime": "2025-11-02T09:30:00",
         "status": "answered",
-        "answer": "根据您的描述,可能是心脏功能问题...",
-        "answerTime": "2025-11-02T09:45:00Z"
+        "answer": "根据您的描述,可能是心脏功能问题。建议您做个心电图和心脏彩超检查,同时注意休息,避免剧烈运动。",
+        "answerTime": "2025-11-02T09:45:00"
+      },
+      {
+        "id": "q004",
+        "doctorId": "doc001",
+        "doctorName": "张伟医生",
+        "question": "血压最近有点高,早上测量是145/95,需要吃降压药吗?",
+        "submitTime": "2025-11-02T14:20:00",
+        "status": "pending",
+        "answer": null,
+        "answerTime": null
       }
     ],
     "pagination": {
@@ -422,76 +479,34 @@
 }
 ```
 
-### 3. 获取医生的问题列表
+---
 
-**接口地址**: `GET /doctors/{doctorId}/questions`
+### POST /questions/:questionId/answer
 
-**请求头**: `Authorization: Bearer {token}`
+> **替换**: `store.answerQuestion(questionId, answer)` (`src/store/index.ts:119`)
 
-**查询参数**:
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| status | string | 否 | 状态筛选 (pending/answered) |
-
-**成功响应**:
-
-```json
-{
-  "code": 200,
-  "message": "success",
-  "data": {
-    "pending": [
-      {
-        "id": "q004",
-        "patientId": "patient001",
-        "patientName": "赵明",
-        "question": "血压最近有点高...",
-        "submitTime": "2025-11-02T14:20:00Z",
-        "status": "pending"
-      }
-    ],
-    "answered": [
-      {
-        "id": "q001",
-        "patientId": "patient001",
-        "patientName": "赵明",
-        "question": "最近总是感觉胸闷气短...",
-        "submitTime": "2025-11-02T09:30:00Z",
-        "status": "answered",
-        "answer": "根据您的描述...",
-        "answerTime": "2025-11-02T09:45:00Z"
-      }
-    ],
-    "statistics": {
-      "pendingCount": 1,
-      "answeredCount": 1,
-      "totalCount": 2
-    }
-  }
-}
-```
-
-### 4. 回复问题
-
-**接口地址**: `POST /questions/{questionId}/answer`
+医生文字回复问题。需要医生 Token。
 
 **请求头**: `Authorization: Bearer {token}`
 
-**请求参数**:
+**路径参数**:
 
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| questionId | string | 问题 ID |
+
+**请求**:
 ```json
 {
-  "answer": "根据您的描述,可能是心脏功能问题。建议您做个心电图和心脏彩超检查,同时注意休息,避免剧烈运动。"
+  "answer": "建议您先做心电图检查，同时注意休息，避免剧烈运动。"
 }
 ```
 
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| answer | string | 是 | 回复内容 |
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| answer | string | 是 | 回复内容，非空 |
 
-**成功响应**:
-
+**成功响应** `200`:
 ```json
 {
   "code": 200,
@@ -499,197 +514,154 @@
   "data": {
     "id": "q001",
     "status": "answered",
-    "answer": "根据您的描述,可能是心脏功能问题...",
-    "answerTime": "2025-11-02T09:45:00Z"
+    "answer": "建议您先做心电图检查，同时注意休息，避免剧烈运动。",
+    "answerTime": "2026-04-22T15:00:00.000Z"
   }
 }
 ```
 
-### 5. 标记问题为已解答
+**错误响应** `400`:
+```json
+{
+  "code": 400,
+  "message": "问题已回复或不存在",
+  "data": null
+}
+```
 
-**接口地址**: `PUT /questions/{questionId}/mark-answered`
+---
+
+### PUT /questions/:questionId/mark-answered
+
+> **替换**: `store.markQuestionAsAnswered(questionId)` (`src/store/index.ts:128`)
+
+医生标记问题为已口述解答（无文字回复，answer 固定为 "已口述解答"）。需要医生 Token。
 
 **请求头**: `Authorization: Bearer {token}`
 
-**成功响应**:
-
+**成功响应** `200`:
 ```json
 {
   "code": 200,
   "message": "标记成功",
   "data": {
-    "id": "q001",
+    "id": "q004",
     "status": "answered",
     "answer": "已口述解答",
-    "answerTime": "2025-11-02T09:50:00Z"
+    "answerTime": "2026-04-22T15:05:00.000Z"
   }
 }
 ```
 
 ---
 
-## 📊 统计接口
+## 统计接口
 
-### 1. 获取系统统计
+### GET /statistics
 
-**接口地址**: `GET /statistics`
+> **替换**: `store.getStatistics()` (`src/store/index.ts:145`)
 
-**成功响应**:
+获取系统统计数据，用于首页统计卡片。
 
+**成功响应** `200`:
 ```json
 {
   "code": 200,
   "message": "success",
   "data": {
     "totalDoctors": 5,
-    "onlineDoctors": 4,
-    "totalPatients": 5,
     "totalQuestions": 7,
-    "pendingQuestions": 4,
-    "answeredQuestions": 3
+    "activeSessions": 4,
+    "totalSessions": 4
   }
 }
 ```
 
----
+**字段与首页卡片的对应关系**:
 
-## 📝 响应状态码
-
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 请求成功 |
-| 201 | 创建成功 |
-| 400 | 请求参数错误 |
-| 401 | 未授权/认证失败 |
-| 403 | 权限不足 |
-| 404 | 资源不存在 |
-| 500 | 服务器内部错误 |
-
-### 统一错误响应格式
-
-```json
-{
-  "code": 400,
-  "message": "请求参数错误",
-  "data": null,
-  "errors": {
-    "field": "doctorId",
-    "message": "医生ID不能为空"
-  }
-}
-```
+| API 字段 | 首页卡片文案 | 计算逻辑 |
+|----------|-------------|----------|
+| totalDoctors | 专业医生 | `doctors.length` |
+| totalQuestions | 问题总数 | `questions.length` |
+| activeSessions | 待响应问题 | `questions.filter(q => q.status === 'pending').length` |
+| totalSessions | 在线诊室 | `doctors.filter(d => d.isActive).length` |
 
 ---
 
-## 🔒 安全规范
+## 科室数据字典
 
-### 认证流程
+| 科室名称 | 对应医生 |
+|----------|----------|
+| 心内科 | 张伟医生 (doc001) |
+| 儿科 | 李娜医生 (doc002) |
+| 骨科 | 王强医生 (doc003) |
+| 妇产科 | 刘敏医生 (doc004) |
+| 消化内科 | 陈杰医生 (doc005) |
+
+---
+
+## 安全规范
+
+### JWT 认证流程
 
 ```mermaid
 sequenceDiagram
-    participant C as 客户端
-    participant S as 服务器
-    
-    C->>S: POST /auth/login (用户名密码)
-    S->>S: 验证凭证
-    S-->>C: 返回 JWT Token
-    C->>C: 存储 Token
-    C->>S: 请求 API (Header: Authorization)
-    S->>S: 验证 Token
-    S-->>C: 返回请求数据
+    participant C as 前端
+    participant S as 后端
+
+    Note over C: 医生登录
+    C->>S: POST /auth/doctor/login {username, password}
+    S-->>C: {token, doctor}
+
+    Note over C: 后续请求
+    C->>S: GET /doctors/:doctorId/questions<br/>Authorization: Bearer {token}
+    S->>S: 验证 Token + 权限
+    S-->>C: 返回数据
+
+    Note over C: Token 过期
+    S-->>C: 401 Unauthorized
+    C->>C: 清除 Token，跳转登录页
 ```
 
-### Token 刷新机制
+### 安全要求
 
-```typescript
-// 请求头格式
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
-// Token 有效期
-const TOKEN_EXPIRES_IN = 86400; // 24小时
-
-// Token 刷新时机
-// 在 Token 过期前1小时自动刷新
-```
-
-### 数据加密
-
-| 数据类型 | 加密方式 |
-|----------|----------|
-| 用户密码 | BCrypt 哈希 |
-| JWT Secret | AES-256 |
-| 敏感字段 | HTTPS 传输 |
+| 项目 | 当前状态 | 目标状态 |
+|------|----------|----------|
+| 密码存储 | 明文 JSON | BCrypt 哈希 |
+| 传输加密 | HTTP (dev) | HTTPS |
+| 认证方式 | 无 (内存状态) | JWT Token |
+| 接口鉴权 | 无 | Bearer Token + 角色校验 |
+| 输入校验 | 前端 only | 前端 + 后端双重校验 |
 
 ---
 
-## 📦 请求示例
+## 前端迁移指南
 
-### cURL 示例
+对接后端时，建议按以下顺序替换 store 方法：
 
-```bash
-# 医生登录
-curl -X POST https://api.qalive.com/v1/auth/doctor/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"dr-zhang-wei","password":"123456"}'
-
-# 提交问题
-curl -X POST https://api.qalive.com/v1/questions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer {token}" \
-  -d '{"doctorId":"doc001","question":"最近总是感觉胸闷..."}'
+```mermaid
+graph TD
+    A[1. 创建 src/api/ 目录] --> B[2. 封装 HTTP 客户端<br/>（axios 实例 + 拦截器）]
+    B --> C[3. 认证接口迁移<br/>loginDoctor → POST /auth/doctor/login]
+    C --> D[4. 只读接口迁移<br/>getActiveDoctors / getStatistics]
+    D --> E[5. 写入接口迁移<br/>addQuestion / answerQuestion]
+    E --> F[6. 添加 Token 管理<br/>localStorage + 自动刷新]
+    F --> G[7. 添加全局错误处理<br/>401 跳转登录 + toast 提示]
 ```
 
-### JavaScript (Fetch) 示例
+### axios 封装示例
 
 ```typescript
-// 基础请求封装
-const BASE_URL = 'https://api.qalive.com/v1';
-
-async function request(endpoint, options = {}) {
-  const token = localStorage.getItem('token');
-  
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
-  };
-  
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-  });
-  
-  const result = await response.json();
-  
-  if (result.code !== 200) {
-    throw new Error(result.message);
-  }
-  
-  return result.data;
-}
-
-// 使用示例
-async function submitQuestion(doctorId: string, question: string) {
-  return await request('/questions', {
-    method: 'POST',
-    body: JSON.stringify({ doctorId, question }),
-  });
-}
-```
-
-### JavaScript (Axios) 示例
-
-```typescript
+// src/api/request.ts
 import axios from 'axios';
+import { message } from 'ant-design-vue';
 
 const api = axios.create({
-  baseURL: 'https://api.qalive.com/v1',
+  baseURL: '/v1',
   timeout: 10000,
 });
 
-// 请求拦截器
+// 请求拦截器：注入 Token
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -698,61 +670,24 @@ api.interceptors.request.use(config => {
   return config;
 });
 
-// 响应拦截器
+// 响应拦截器：统一错误处理
 api.interceptors.response.use(
-  response => response.data,
+  response => response.data.data,
   error => {
     if (error.response?.status === 401) {
-      // Token 过期，跳转登录
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      window.location.href = '/doctor/login';
+    } else {
+      message.error(error.response?.data?.message || '请求失败');
     }
     return Promise.reject(error);
   }
 );
 
-// API 方法
-export const doctorAPI = {
-  login: (username: string, password: string) =>
-    api.post('/auth/doctor/login', { username, password }),
-  
-  getOnlineDoctors: () =>
-    api.get('/doctors/online'),
-};
-
-export const questionAPI = {
-  submit: (doctorId: string, question: string) =>
-    api.post('/questions', { doctorId, question }),
-  
-  answer: (questionId: string, answer: string) =>
-    api.post(`/questions/${questionId}/answer`, { answer }),
-};
+export default api;
 ```
 
 ---
 
-## 🏥 科室数据字典
-
-| 科室代码 | 科室名称 |
-|----------|----------|
-| CARDIO | 心内科 |
-| PEDIA | 儿科 |
-| ORTHO | 骨科 |
-| OBGY | 妇产科 |
-| GI | 消化内科 |
-| NEURO | 神经内科 |
-| DERMA | 皮肤科 |
-| OPHTH | 眼科 |
-
----
-
-## 📋 接口变更记录
-
-| 版本 | 日期 | 变更内容 |
-|------|------|----------|
-| v1.0.0 | 2025-11-02 | 初始版本 |
-
----
-
-*最后更新: 2026年4月21日*
-*本文档由 Context Builder 工具集自动生成*
+*最后更新: 2026-04-22*
+*由 Context Builder 工具集生成*
